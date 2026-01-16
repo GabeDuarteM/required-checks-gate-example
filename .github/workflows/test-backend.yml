@@ -1,0 +1,67 @@
+name: Test Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/test-backend.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/test-backend.yml'
+
+jobs:
+  check-changes:
+    name: Check what changed
+    runs-on: ubuntu-latest
+    outputs:
+      api-changed: ${{ steps.filter.outputs.api }}
+      db-changed: ${{ steps.filter.outputs.db }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'backend/api/**'
+            db:
+              - 'backend/db/**'
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run lint
+        run: echo "Linting backend..." && sleep 3
+
+  test-api:
+    name: Test API
+    needs: check-changes
+    if: needs.check-changes.outputs.api-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run API tests
+        run: echo "Testing API..." && sleep 3
+
+  test-db:
+    name: Test DB
+    needs: check-changes
+    if: needs.check-changes.outputs.db-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run DB tests
+        run: echo "Testing DB..." && sleep 3
+
+  build:
+    name: Build
+    needs: [lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend
+        run: echo "Building backend..." && sleep 5

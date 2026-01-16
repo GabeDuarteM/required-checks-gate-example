@@ -1,0 +1,17 @@
+{
+  "workflows": {
+    "Test Frontend": {
+      "required_checks": [
+        "Lint",
+        "TypeScript Check",
+        "Build"
+      ]
+    },
+    "Test Backend": {
+      "required_checks": [
+        "Lint",
+        "Build"
+      ]
+    }
+  }
+}

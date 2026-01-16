@@ -1,0 +1,91 @@
+name: Test Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'public/**'
+      - 'package.json'
+      - '.github/workflows/test-frontend.yml'
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'public/**'
+      - 'package.json'
+      - '.github/workflows/test-frontend.yml'
+
+jobs:
+  check-changes:
+    name: Check what changed
+    runs-on: ubuntu-latest
+    outputs:
+      app-changed: ${{ steps.filter.outputs.app }}
+      public-changed: ${{ steps.filter.outputs.public }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            app:
+              - 'app/**'
+            public:
+              - 'public/**'
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+
+  typecheck:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  test-app:
+    name: Test App
+    needs: check-changes
+    if: needs.check-changes.outputs.app-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run app tests
+        run: echo "Testing app components..." && sleep 3
+
+  test-public:
+    name: Test Public Assets
+    needs: check-changes
+    if: needs.check-changes.outputs.public-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate public assets
+        run: echo "Validating public assets..." && sleep 3
+
+  build:
+    name: Build
+    needs: [lint, typecheck]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
