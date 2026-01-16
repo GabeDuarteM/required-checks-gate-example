@@ -11,6 +11,10 @@ on:
       - 'backend/**'
       - '.github/workflows/test-backend.yml'
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   check-changes:
     name: Check what changed
