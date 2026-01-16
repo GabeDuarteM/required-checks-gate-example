@@ -11,6 +11,7 @@ on:
     types: [opened, synchronize]
 
 permissions:
+  contents: read
   checks: read
   statuses: write
   actions: read
