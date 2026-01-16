@@ -1,13 +1,13 @@
-# Auto-merge Gate Example
+# Required Checks Gate Example
 
-An example of workflows using gating to allow enabling automerge.
+An example of workflows using a gate to evaluate required checks, allowing features like auto-merge to work correctly with conditional workflows.
 
 ## Problem
 
-GitHub's native auto-merge requires all required status checks to pass. However, when workflows or checks are conditionally skipped:
+GitHub's branch protection can require specific status checks to pass. However, when workflows or checks are conditionally skipped:
 
 - If a workflow or check is **skipped** (due to path filters, branch filters, `if:` conditions, etc.), it may remain "pending" forever
-- This blocks auto-merge even when the skipped checks are irrelevant to the PR
+- This blocks merging (and auto-merge) even when the skipped checks are irrelevant to the PR
 
 ## Solution
 
@@ -15,7 +15,7 @@ This repo demonstrates a **gate workflow** that:
 
 1. Monitors when CI workflows complete
 2. Evaluates which checks actually ran vs. were skipped
-3. Sets a single `auto-merge-gate` status that can be used as the required check
+3. Sets a single `Required Checks` status that can be used as the required check
 4. Treats skipped workflows/checks as "passed" (they're not relevant to this PR)
 
 ## Workflows
@@ -24,18 +24,18 @@ This repo demonstrates a **gate workflow** that:
 |----------|-------------|--------|
 | Test Frontend | `app/**`, `public/**`, `package.json` | Lint, TypeScript, Build, conditional tests |
 | Test Backend | `backend/**` | Lint, Build, conditional tests |
-| Auto-merge Gate | PR events + when above workflows complete | Evaluates all checks, sets gate status |
+| Required Checks Gate | PR events + when above workflows complete | Evaluates all checks, sets gate status |
 
 ## How It Works
 
 ```
 PR opened (changes app/page.tsx only)
     │
-    ├─► Test Frontend runs ──────► completes ──► triggers Auto-merge Gate
+    ├─► Test Frontend runs ──────► completes ──► triggers Required Checks Gate
     │                                                    │
     ├─► Test Backend SKIPPED (no backend changes)        │
     │                                                    ▼
-    └─► Auto-merge Gate sets "pending" ◄─────── Re-evaluates:
+    └─► Required Checks Gate sets "pending" ◄── Re-evaluates:
                                                  - Frontend checks: passed ✓
                                                  - Backend workflow: skipped ✓
                                                  - Sets status: SUCCESS
@@ -43,7 +43,7 @@ PR opened (changes app/page.tsx only)
 
 ## Configuration
 
-Edit `.github/auto-merge-config.json` to define which checks are required per workflow:
+Edit `.github/required-checks-config.json` to define which checks are required per workflow:
 
 ```json
 {
@@ -60,8 +60,8 @@ Edit `.github/auto-merge-config.json` to define which checks are required per wo
 
 ## Setup
 
-1. Add `auto-merge-gate` as a required status check in branch protection rules
-2. PR authors can enable auto-merge on their PRs
+1. Add `Required Checks` as a required status check in branch protection rules
+2. PR authors can enable auto-merge on their PRs (optional)
 3. The gate workflow evaluates checks and allows merge when appropriate
 
 ## Limitations
