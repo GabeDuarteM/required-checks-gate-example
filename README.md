@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Auto-merge Gate Example
 
-## Getting Started
+An example of workflows using gating to allow enabling automerge.
 
-First, run the development server:
+## Problem
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+GitHub's native auto-merge requires all required status checks to pass. However, when workflows or checks are conditionally skipped:
+
+- If a workflow or check is **skipped** (due to path filters, branch filters, `if:` conditions, etc.), it may remain "pending" forever
+- This blocks auto-merge even when the skipped checks are irrelevant to the PR
+
+## Solution
+
+This repo demonstrates a **gate workflow** that:
+
+1. Monitors when CI workflows complete
+2. Evaluates which checks actually ran vs. were skipped
+3. Sets a single `auto-merge-gate` status that can be used as the required check
+4. Treats skipped workflows/checks as "passed" (they're not relevant to this PR)
+
+## Workflows
+
+| Workflow | Triggers On | Checks |
+|----------|-------------|--------|
+| Test Frontend | `app/**`, `public/**`, `package.json` | Lint, TypeScript, Build, conditional tests |
+| Test Backend | `backend/**` | Lint, Build, conditional tests |
+| Auto-merge Gate | PR events + when above workflows complete | Evaluates all checks, sets gate status |
+
+## How It Works
+
+```
+PR opened (changes app/page.tsx only)
+    │
+    ├─► Test Frontend runs ──────► completes ──► triggers Auto-merge Gate
+    │                                                    │
+    ├─► Test Backend SKIPPED (no backend changes)        │
+    │                                                    ▼
+    └─► Auto-merge Gate sets "pending" ◄─────── Re-evaluates:
+                                                 - Frontend checks: passed ✓
+                                                 - Backend workflow: skipped ✓
+                                                 - Sets status: SUCCESS
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Configuration
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Edit `.github/auto-merge-config.json` to define which checks are required per workflow:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```json
+{
+  "workflows": {
+    "Test Frontend": {
+      "required_checks": ["Lint", "TypeScript Check", "Build"]
+    },
+    "Test Backend": {
+      "required_checks": ["Lint", "Build"]
+    }
+  }
+}
+```
 
-## Learn More
+## Setup
 
-To learn more about Next.js, take a look at the following resources:
+1. Add `auto-merge-gate` as a required status check in branch protection rules
+2. PR authors can enable auto-merge on their PRs
+3. The gate workflow evaluates checks and allows merge when appropriate
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Limitations
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The `workflow_run` trigger only works if the gate workflow file exists on the default branch (so the initial PR adding the gate workflow won't trigger it).
+- Must merge the gate workflow to `main` first before it can respond to other workflow completions
