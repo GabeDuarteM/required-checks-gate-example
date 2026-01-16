@@ -63,3 +63,4 @@ export default function Home() {
     </div>
   );
 }
+const x: number = 'string';
