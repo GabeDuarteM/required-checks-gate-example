@@ -1,6 +1,7 @@
 # Required Checks Gate Example
 
 An example of workflows using a gate to evaluate required checks, allowing features like auto-merge to work correctly with conditional workflows.
+Check the [PRs](https://github.com/GabeDuarteM/merge-gate-example/pulls) to see it in action!
 
 ## Problem
 
