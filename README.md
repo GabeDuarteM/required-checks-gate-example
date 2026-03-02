@@ -65,3 +65,5 @@ Edit `.github/required-checks-config.json` to define which workflows are require
 
 - The `workflow_run` trigger only works if the gate workflow file exists on the default branch (so the initial PR adding the gate workflow won't trigger it).
 - Must merge the gate workflow to `main` first before it can respond to other workflow completions
+
+## Change
