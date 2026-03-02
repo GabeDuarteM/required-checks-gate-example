@@ -15,17 +15,17 @@ GitHub's branch protection can require specific status checks to pass. However, 
 This repo demonstrates a **gate workflow** that:
 
 1. Monitors when CI workflows complete
-2. Evaluates which checks actually ran vs. were skipped
+2. Evaluates whether each required workflow ran and passed
 3. Sets a single `Required Checks` status that can be used as the required check
-4. Treats skipped workflows/checks as "passed" (they're not relevant to this PR)
+4. Treats workflows that didn't run (due to conditional execution) as "passed" (they're not relevant to this PR)
 
 ## Workflows
 
-| Workflow | Triggers On | Checks |
-|----------|-------------|--------|
-| Test Frontend | `app/**`, `public/**`, `package.json` | Lint, TypeScript, Build, conditional tests |
-| Test Backend | `backend/**` | Lint, Build, conditional tests |
-| Required Checks Gate | PR events + when above workflows complete | Evaluates all checks, sets gate status |
+| Workflow | Triggers On |
+|----------|-------------|
+| Test Frontend | `app/**`, `public/**`, `package.json` |
+| Test Backend | `backend/**` |
+| Required Checks Gate | PR events + when above workflows complete |
 
 ## How It Works
 
@@ -37,25 +37,21 @@ PR opened (changes app/page.tsx only)
     ├─► Test Backend SKIPPED (no backend changes)        │
     │                                                    ▼
     └─► Required Checks Gate sets "pending" ◄── Re-evaluates:
-                                                 - Frontend checks: passed ✓
-                                                 - Backend workflow: skipped ✓
+                                                 - Test Frontend: passed ✓
+                                                 - Test Backend: didn't run ✓
                                                  - Sets status: SUCCESS
 ```
 
 ## Configuration
 
-Edit `.github/required-checks-config.json` to define which checks are required per workflow:
+Edit `.github/required-checks-config.json` to define which workflows are required:
 
 ```json
 {
-  "workflows": {
-    "Test Frontend": {
-      "required_checks": ["Lint", "TypeScript Check", "Build"]
-    },
-    "Test Backend": {
-      "required_checks": ["Lint", "Build"]
-    }
-  }
+  "required_workflows": [
+    "Test Frontend",
+    "Test Backend"
+  ]
 }
 ```
 
