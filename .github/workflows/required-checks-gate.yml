@@ -18,7 +18,7 @@ permissions:
 
 concurrency:
   group: required-checks-${{ github.event.pull_request.number || (github.event.workflow_run.pull_requests[0] && github.event.workflow_run.pull_requests[0].number) || github.run_id }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   evaluate:
